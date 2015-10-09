@@ -20,6 +20,7 @@ usage: scan-network subnet [ action_type [ action_params ] ]
 
 Example:
 ```bash
+|11:16:07| → ./scan-network 172.16.100.1/24 --http
 Note: total 256 IPs in this range
 Check starting...
 172.16.100.46 responded
