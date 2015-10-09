@@ -19,7 +19,7 @@ usage: network-scanner subnet [ --http [timeout seconds] | --ping [count] ]
        network-scanner 192.168.0.0/16  --http 1
        network-scanner 192.168.0.0/16  --http
 
-       defaults – http, timeout is 3, count for ping is 3
+       defaults – http, timeout is 1, count for ping is 3
 ```
 
 Example:

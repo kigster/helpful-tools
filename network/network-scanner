@@ -97,7 +97,7 @@ class ScanSubnet
     puts "       network-scanner 192.168.0.0/16  --http 1"
     puts "       network-scanner 192.168.0.0/16  --http"
     puts ""
-    puts "       defaults – http, timeout is #{DEFAULT_PING_COUNT}, count for ping is #{DEFAULT_PING_COUNT}"
+    puts "       defaults – http, timeout is #{DEFAULT_HTTP_TIMEOUT}, count for ping is #{DEFAULT_PING_COUNT}"
     nil
   end
 
