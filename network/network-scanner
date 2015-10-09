@@ -1,0 +1,99 @@
+#!/usr/bin/ruby
+#
+# (c) 2015 Konstantin Gredeskoul
+# MIT License
+#
+# Usage:
+#       network-scanner network_cidr (--http | --ping [num]) --verbose
+#    eg:
+#       ./network-scanner 172.16.100.1/24 --ping 3"
+#       ./network-scanner 192.168.0.0/16 --http"
+#
+require 'ipaddr'
+
+class ScanSubnet
+  class CheckIPviaHTTP
+    def check(ip)
+      output = `curl -s -I -m 3 http://#{ip}/ 2>&1 | grep HTTP`.chomp
+      output !~ /^\s*$/
+    end
+  end
+  class CheckIPviaPing
+    attr_accessor :ping_count
+    def initialize(ping_count = 1)
+      self.ping_count = ping_count
+    end
+    def check(ip)
+      output = `ping -c #{ping_count} #{ip} 2>/dev/null | grep time= `
+      !output.nil?
+    end
+  end
+  attr_accessor :argv, :verbose
+
+  def initialize(argv)
+    self.argv = argv
+    self.verbose = argv.include?('--verbose') ? true : false
+  end
+
+  def run!
+    input_subnet = argv[0]
+    input_action = argv[1] || '--http'
+
+    action_class = case input_action
+                   when "--http"
+                     CheckIPviaHTTP.new
+                   when "--ping"
+                     CheckIPviaPing.new(argv[2])
+                   else
+                     usage
+                     exit 1
+                   end
+
+    subnet = validate(input_subnet)
+    return if subnet.nil?
+    ip_array = subnet.to_range.to_a
+    puts "Note: total #{ip_array.size} IPs in this range\nStarting the check..."
+    ip_array.each do |ip|
+      print "checking #{ip}... " if verbose
+      result = action_class.check(ip)
+      if result
+        if verbose
+          puts (verbose ? ">> Timeout" : ">> OK")
+        else
+          puts "#{ip} responded"
+        end
+      else
+        puts ">> Timeout" if verbose
+      end
+    end
+  end
+
+  private
+
+  def usage
+    puts "usage: network-scanner subnet [ action_type [ action_params ] ]"
+    puts "       network-scanner subnet [ --http | --ping [count] ]"
+    puts "   eg: network-scanner 172.16.100.1/24 --ping 3"
+    puts "       network-scanner 192.168.0.0/16 --http"
+    puts ""
+    puts "       note: --http is the default scan method"
+    nil
+  end
+
+  def validate(subnet_cidr)
+    if subnet_cidr !~ /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/[1-3]\d?/
+      puts "ERROR: #{subnet_cidr} is not in the CIDR notation"
+      usage
+    else
+      begin
+        IPAddr.new subnet_cidr
+      rescue Exception => e
+        puts "ERROR: IP range can not be parsed. \n\tMust be in CIDR format, ie. 172.16.0.0/24"
+        puts e.message
+        usage
+      end
+    end
+  end
+end
+
+ScanSubnet.new(ARGV).run!
