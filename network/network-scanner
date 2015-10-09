@@ -4,24 +4,34 @@
 # MIT License
 #
 # Usage:
-#       network-scanner network_cidr (--http | --ping [num]) --verbose
+#       network-scanner network_cidr (--http [timeout seconds] | --ping [num]) --verbose
 #    eg:
 #       ./network-scanner 172.16.100.1/24 --ping 3"
-#       ./network-scanner 192.168.0.0/16 --http"
+#       ./network-scanner 192.168.0.0/16 --http 1"
 #
 require 'ipaddr'
 
 class ScanSubnet
+  DEFAULT_PING_COUNT = 3
+  DEFAULT_HTTP_TIMEOUT = 1
+  DEFAULT_ACTION = '--http'
+
   class CheckIPviaHTTP
+    attr_accessor :timeout
+    def initialize(timeout = nil)
+      self.timeout = Integer(timeout) rescue false
+      self.timeout ||= DEFAULT_HTTP_TIMEOUT
+    end
     def check(ip)
-      output = `curl -s -I -m 3 http://#{ip}/ 2>&1 | grep HTTP`.chomp
+      output = `curl -s -I -m #{timeout} http://#{ip}/ 2>&1 | grep HTTP`.chomp
       output !~ /^\s*$/
     end
   end
   class CheckIPviaPing
     attr_accessor :ping_count
-    def initialize(ping_count = 1)
-      self.ping_count = ping_count
+    def initialize(ping_count = nil)
+      self.ping_count = Integer(ping_count) rescue false
+      self.ping_count ||= DEFAULT_PING_COUNT
     end
     def check(ip)
       output = `ping -c #{ping_count} #{ip} 2>/dev/null | grep time= `
@@ -33,15 +43,19 @@ class ScanSubnet
   def initialize(argv)
     self.argv = argv
     self.verbose = argv.include?('--verbose') ? true : false
+    if argv.include?('--help') || argv.include?('-h')
+      usage
+      exit 0
+    end
   end
 
   def run!
     input_subnet = argv[0]
-    input_action = argv[1] || '--http'
+    input_action = argv[1] || DEFAULT_ACTION
 
     action_class = case input_action
                    when "--http"
-                     CheckIPviaHTTP.new
+                     CheckIPviaHTTP.new(argv[2])
                    when "--ping"
                      CheckIPviaPing.new(argv[2])
                    else
@@ -52,7 +66,8 @@ class ScanSubnet
     subnet = validate(input_subnet)
     return if subnet.nil?
     ip_array = subnet.to_range.to_a
-    puts "Note: total #{ip_array.size} IPs in this range\nStarting the check..."
+    puts "Total IPS: #{ip_array.size}, from #{ip_array.first} to #{ip_array.last}, using #{input_action} to check..."
+    puts
     ip_array.each do |ip|
       print "checking #{ip}... " if verbose
       result = action_class.check(ip)
@@ -60,10 +75,14 @@ class ScanSubnet
         if verbose
           puts (verbose ? ">> Timeout" : ">> OK")
         else
-          puts "#{ip} responded"
+          puts "\n#{ip} responded\n"
         end
       else
-        puts ">> Timeout" if verbose
+        if verbose
+          puts ">> Timeout"
+        else
+          print "."
+        end
       end
     end
   end
@@ -71,12 +90,13 @@ class ScanSubnet
   private
 
   def usage
-    puts "usage: network-scanner subnet [ action_type [ action_params ] ]"
-    puts "       network-scanner subnet [ --http | --ping [count] ]"
-    puts "   eg: network-scanner 172.16.100.1/24 --ping 3"
-    puts "       network-scanner 192.168.0.0/16 --http"
+    puts "\nusage: network-scanner subnet [ --http [timeout seconds] | --ping [count] ]"
+    puts "                           [ --verbose ] [ --help | -h ]\n\n"
+    puts "   eg: network-scanner 172.16.100.1/24 --ping 3 --verbose"
+    puts "       network-scanner 192.168.0.0/16  --http 1"
+    puts "       network-scanner 192.168.0.0/16  --http"
     puts ""
-    puts "       note: --http is the default scan method"
+    puts "       defaults – http, timeout is #{DEFAULT_PING_COUNT}, count for ping is #{DEFAULT_PING_COUNT}"
     nil
   end
 
