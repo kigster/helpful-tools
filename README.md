@@ -24,9 +24,8 @@ usage: network-scanner subnet [ --http [timeout seconds] | --ping [count] ]
 
 Example:
 ```bash
-|11:16:07| → ./scan-network 172.16.100.1/24
+|11:16:07| → ./network-scanner 172.16.100.40/28
 Total IPS: 16, from 172.16.100.32 to 172.16.100.47, using --http to check...
-
 ..............
 172.16.100.46 responded
 .

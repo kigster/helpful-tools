@@ -67,7 +67,6 @@ class ScanSubnet
     return if subnet.nil?
     ip_array = subnet.to_range.to_a
     puts "Total IPS: #{ip_array.size}, from #{ip_array.first} to #{ip_array.last}, using #{input_action} to check..."
-    puts
     ip_array.each do |ip|
       print "checking #{ip}... " if verbose
       result = action_class.check(ip)
