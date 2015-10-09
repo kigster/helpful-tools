@@ -10,20 +10,25 @@ I needed a tool to find a repeater / router on the subnet, where repeater was no
 Using this tool, you can pretty quickly find all IPs that respond to HTTP, or are pingable, on any subnet.
 
 ```bash
-usage: scan-network subnet [ action_type [ action_params ] ]
-       scan-network subnet [ --http | --ping [count] ]
-   eg: scan-network 172.16.100.1/24 --ping 3
-       scan-network 192.168.0.0/16 --http
+|11:56:12| → ./network-scanner --help
 
-       note: --http is the default scan method
+usage: network-scanner subnet [ --http [timeout seconds] | --ping [count] ]
+                              [ --verbose ] [ --help | -h ]
+
+   eg: network-scanner 172.16.100.1/24 --ping 3 --verbose
+       network-scanner 192.168.0.0/16  --http 1
+       network-scanner 192.168.0.0/16  --http
+
+       defaults – http, timeout is 3, count for ping is 3
 ```
 
 Example:
 ```bash
-|11:16:07| → ./scan-network 172.16.100.1/24 --http
-Note: total 256 IPs in this range
-Check starting...
+|11:16:07| → ./scan-network 172.16.100.1/24
+Total IPS: 16, from 172.16.100.32 to 172.16.100.47, using --http to check...
+
+..............
 172.16.100.46 responded
-172.16.100.71 responded
-.... [ etc ] ...
+.
+|11:16:23| → 
 ```

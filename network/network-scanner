@@ -90,8 +90,9 @@ class ScanSubnet
   private
 
   def usage
-    puts "\nusage: network-scanner subnet [ --http [timeout seconds] | --ping [count] ]"
-    puts "                           [ --verbose ] [ --help | -h ]\n\n"
+    puts
+    puts "usage: network-scanner subnet [ --http [timeout seconds] | --ping [count] ]"
+    puts "                              [ --verbose ] [ --help | -h ]\n\n"
     puts "   eg: network-scanner 172.16.100.1/24 --ping 3 --verbose"
     puts "       network-scanner 192.168.0.0/16  --http 1"
     puts "       network-scanner 192.168.0.0/16  --http"
